@@ -89,6 +89,8 @@ async function saveEditAPI(){
   window.location.reload();
 }
 function checkFields(){
+  let convertedDate = new Date(endDateToDo.value.replace(/-/g, ", "))
+  let curentDate = new Date(Date.now());
   if (typeToDo.value === ""){
     alert('Please enter To Do Type field'); 
     return false
@@ -98,7 +100,7 @@ function checkFields(){
   }else if (endDateToDo.value === ""){
     alert('Please select To Do end date');
     return false
-  }else if (Date.parse(endDateToDo.value.replace(/-/g, ", ")) < Date.now()){
+  }else if ((convertedDate.getMonth() < curentDate.getMonth()) || (convertedDate.getDate() < curentDate.getDate())){  
     alert('The To Do End date is in past! select todays date or later');
     return false
   }else return true
