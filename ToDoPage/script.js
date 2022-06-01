@@ -1,32 +1,39 @@
 let toDoId;
+let user = localStorage.getItem('userToDo');
 const inputToDoCard = document.querySelector("#toDoCardInput");
 const output = document.querySelector('.span2');
 const addToDo = document.querySelector('#add');
 const saveToDo = document.querySelector('#saveToDoCard');
 const saveEditToDo = document.querySelector('#saveEditToDoCard');
-let user = localStorage.getItem('userToDo');
 const UserText = document.querySelector('.h1');
-UserText.textContent = user;
 const typeToDo = document.querySelector('#tDType');
 const contentToDo = document.querySelector('#contentText');
 const endDateToDo = document.querySelector('#endDate'); 
 const addToDoH3 = document.querySelector('.h3ToDoCard');
 
+UserText.textContent = user;
+
 document.querySelector("#add").addEventListener("click", () => {
   inputToDoCard.style.display = "block";
   saveToDo.style.display = "block";
   saveEditToDo.style.display = "none";
+  typeToDo.value = "";
+  contentToDo.value = "";
+  endDateToDo.value = "";
 });
 document.querySelector("#closeToDoCard").addEventListener("click", () => {
   document.querySelector("#toDoCardInput").style.display = "none";
+  typeToDo.value = "";
+  contentToDo.value = "";
+  endDateToDo.value = "";
 });
 document.querySelector("#logoff").addEventListener("click", () => {
   localStorage.clear();
+
 });
 
-saveToDo.addEventListener('click', () => {
-  console.log(endDateToDo.value);
-  fetch('https://testapi.io/api/ABukis/resource/ToDoList', {
+async function saveToAPI(){
+  await fetch('https://testapi.io/api/ABukis/resource/ToDoList', {
     method: 'POST',
     headers: {
       'Content-type': 'application/json'
@@ -47,14 +54,68 @@ saveToDo.addEventListener('click', () => {
       console.log('not okay');
     }
   })
-  .then((result) => {
+  .catch((err) => {
+    console.log(err);
+  })
+  window.location.reload();
+}
+async function saveEditAPI(){
+  await fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
+    method: 'PUT',
+    headers: {
+     'Content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      nameLastName: user,
+      toDoType: typeToDo.value,
+      toDoContext: contentToDo.value,
+      endDateToDo: endDateToDo.value,
+      toDoDone: 'false'
+    })
+  })
+  .then((response) => {
+    if (response.ok) {
+      console.log('ok');
+      return response.json();
+    } else {
+      console.log('not okay');
+    }
   })
   .catch((err) => {
     console.log(err);
   })
-  setTimeout(() => {   
-    window.location.reload();
-  }, 700)  
+  saveToDo.style.display = "none";
+  inputToDoCard.style.display = "none"; 
+  window.location.reload();
+}
+function checkFields(){
+  if (typeToDo.value === ""){
+    alert('Please enter To Do Type field'); 
+    return false
+  }else if (contentToDo.value === ""){
+    alert('Please enter To Do content field');
+    return false
+  }else if (endDateToDo.value === ""){
+    alert('Please select To Do end date');
+    return false
+  }else if (Date.parse(endDateToDo.value.replace(/-/g, ", ")) < Date.now()){
+    alert('The To Do End date is in past! select todays date or later');
+    return false
+  }else return true
+}
+saveToDo.addEventListener('click', () => {
+  if (checkFields()){
+    saveToAPI()
+  }
+})
+saveEditToDo.addEventListener('click', () => {
+  if (checkFields()){
+    saveEditAPI()
+  }
+})
+
+saveEditToDo.addEventListener('click', () => {
+  
 })
 function getToDo() {
   fetch('https://testapi.io/api/ABukis/resource/ToDoList')
@@ -109,6 +170,7 @@ function render(ToDos) {
     const elementId = event.target.parentElement.id;
     deleteToDo(elementId);
   })
+
   const editButton = document.createElement('button');
   editButton.textContent = 'EDIT';
   editButton.className = 'toDoEditB';
@@ -142,52 +204,18 @@ window.addEventListener('load', () => {
   getToDo()
 })
 async function deleteToDo(toDoId) {
-  const fethg = await fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
+  const response = await fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
     method: 'DELETE'
   })
-  console.log(fethg);
   output.innerHTML = '';
-  if (fethg) {
+  if (response) {
     getToDo();
   }
 }
-saveEditToDo.addEventListener('click', () => {
-  fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
-    method: 'PUT',
-    headers: {
-     'Content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      nameLastName: user,
-      toDoType: typeToDo.value,
-      toDoContext: contentToDo.value,
-      endDateToDo: endDateToDo.value,
-      toDoDone: 'false'
-    })
-  })
-  .then((response) => {
-    if (response.ok) {
-      console.log('ok');
-      return response.json();
-    } else {
-      console.log('not okay');
-    }
-  })
-  .then((result) => {
-    console.log(result);
-  })
-  .catch((err) => {
-    console.log(err);
-  })
-  setTimeout(() => {
-    saveToDo.style.display = "none";
-    inputToDoCard.style.display = "none"; 
-    window.location.reload();
-  }, 700)  
-})
-function seveDoneToDO(toDoId){
+
+async function seveDoneToDO(toDoId){
   let toDoElement = document.getElementById(toDoId);
-  fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
+  await fetch(`https://testapi.io/api/ABukis/resource/ToDoList/${toDoId}`, {
     method: 'PUT',
     headers: {
       'Content-type': 'application/json'
@@ -208,13 +236,8 @@ function seveDoneToDO(toDoId){
       console.log('not okay');
   }
   })
-  .then((result) => {
-    //console.log(result);
-  })
   .catch((err) => {
     console.log(err);
   })
-  setTimeout(() => {
-    window.location.reload();
-  }, 700)  
+  window.location.reload();
 }
